@@ -7,7 +7,9 @@ use Illuminate\Http\Request;
 use App\Http\Requests\CreateDokumenRequest;
 use App\Http\Controllers\Controller;
 
-use App\Dokumen;
+use Storage;
+
+use App\Dokumen as Dokumen;
 use App\Departemen as Departemen;
 use App\User as User;
 use Auth;
@@ -46,67 +48,146 @@ class DokumenController extends Controller
      */
     public function create()
     {
+        $departemen = Departemen::where('hapus',1)->get()->toArray();
+        $user       = User::where('hapus',1)->get()->toArray();
         
-        
-        return view('admin.dokumen.create',['menu'=>$this->menu]);
+        return view('admin.dokumen.create',['menu'=>$this->menu,'departemenlist'=>$departemen,'userlist'=>$user]);
     }
     
-    public function edit($id, Dokumen $dokumen)
+    public function edit($id)
     {
-        $dokumen   = $dokumen->with('modules')->whereId($id)->first();
+        $dokumen   = Dokumen::with('departemen','users')->whereId($id)->first();
         
-        $mod    = $dokumen->modules->toArray();
+        $departemen    = $dokumen->departemen->toArray();
+        $users         = $dokumen->users->toArray();
         
-        $modules    = array();
-        
-        foreach($mod as $v)
+        $dep    = array();
+        $usr    = array();
+//        print_r($departemen);
+        foreach($departemen as $v)
         {
-            $modules[]  = $v['id'];
+            $dep[$v['id']]  = $v['pivot']['role'];
         }
         
-        $dokumen->modules  = implode(",", $modules);
+        foreach($users as $v)
+        {
+            $usr[$v['id']]  = $v['pivot']['role'];
+        }
         
-        return view('admin.dokumen.edit',compact('dokumen'))->with(['menu'=>$this->menu]);
+        $dokumen->usr  = $usr;
+        $dokumen->dep  = $dep;
+//        
+        $departemenlist = Departemen::where('hapus',1)->get()->toArray();
+        $userlist       = User::where('hapus',1)->get()->toArray();
+        
+        return view('admin.dokumen.edit',compact('dokumen'))->with(['menu'=>$this->menu,'departemenlist'=>$departemenlist,'userlist'=>$userlist]);
     }
     
-    public function save(CreateDokumenRequest $request, Dokumen $dokumen)
+    public function save(CreateDokumenRequest $request)
     {
         $data   = $request->all();
-        $data['password']   = bcrypt($data['password']);
+        
+        if ($request->hasFile('dokumen_file')) 
+        {
+            $file = $request->file('dokumen_file');
+            $filename   = base64_encode(bcrypt(uniqid('TpK_')));
+            $file->move(storage_path('uploads/dokumen/'), $filename);
+            
+            $data['dokumen_file']   = $file->getClientOriginalName();
+            $data['dokumen_store']  = $filename;
+            $data['dokumen_ukuran']  = (int)$file->getClientSize()/1048576;
+            
+            //print_r($data);
+        }
+        else
+        {
+            unset($data['dokumen_file']);
+        }
+        
         $data['created_by'] = Auth::user()->id;
         $data['updated_by'] = Auth::user()->id;
         
-        $save = $dokumen->create($data);
+        $doc = Dokumen::create($data);
         
-        $this->saveDetail($save->id, $data['modules']);
         
+        
+        if($request->dep)
+        {
+            $docSel = Dokumen::find($doc->id);
+            $docSel->departemen()->detach();
+            foreach($request->dep as $k => $v)
+            {
+                $docSel->departemen()->attach($k,['role'=>$v]);
+            }
+        }
+        
+        if($request->usr)
+        {
+            $usrSel = Dokumen::find($doc->id);
+            $usrSel->users()->detach();
+            foreach($request->usr as $k => $v)
+            {
+                $docSel->users()->attach($k,['role'=>$v]);
+            }
+        }
         return redirect()->route('dokumen.tabel');
     }
     
-    public function update($id, Request $request, Dokumen $dokumen)
+    public function update($id, Request $request)
     {
-        $edit    = $dokumen->whereId($id)->first();
-       
+        $edit    = Dokumen::whereId($id)->first();
+//       
         $data   = $request->all();
-       
-        if($data['password'])
-            $data['password']   = bcrypt($data['password']);
+        
+        if ($request->hasFile('dokumen_file')) 
+        {
+            $file = $request->file('dokumen_file');
+            $filename   = base64_encode(bcrypt(uniqid('TpK_')));
+            $file->move(storage_path('uploads/dokumen/'), $filename);
+            
+            $data['dokumen_file']   = $file->getClientOriginalName();
+            $data['dokumen_store']  = $filename;
+            $data['dokumen_ukuran']  = (int)$file->getClientSize()/1048576;
+            
+        }
         else
-            unset($data['password']);
+        {
+            unset($data['dokumen_file']);
+        }
            
         $data['created_by'] = Auth::user()->id;
         $data['updated_by'] = Auth::user()->id;
 
         $edit->fill($data)->save();
-
-        $this->saveDetail($id, $data['modules']);
+        
+        if($request->dep)
+        {
+            $docSel = Dokumen::find($id);
+            $docSel->departemen()->detach();
+            foreach($request->dep as $k => $v)
+            {
+                $docSel->departemen()->attach($k,['role'=>$v]);
+            }
+        }
+        
+        if($request->usr)
+        {
+            $usrSel = Dokumen::find($id);
+            $usrSel->users()->detach();
+            foreach($request->usr as $k => $v)
+            {
+                $docSel->users()->attach($k,['role'=>$v]);
+            }
+        }
+//
+//        $this->saveDetail($id, $data['modules']);
 
         return redirect()->route('dokumen.tabel');
     }
     
-    public function softdelete($id, Request $request, Dokumen $dokumen)
+    public function softdelete($id, Request $request)
     {
-        $edit    = $dokumen->whereId($id)->first();
+        $edit    = Dokumen::whereId($id)->first();
         
         $data    = $request->input();
         
@@ -118,18 +199,22 @@ class DokumenController extends Controller
         echo json_encode(array('status' => 1, 'msg' => 'Data berhasil dihapus!!!'));
     }
     
-    public function dataTables(Request $request, Dokumen $dokumen)
+    public function dataTables(Request $request)
     {
         $data   =    null;
-        if(Auth::user()->id==1)
+        if(Auth::user()->id>1)
         {
-            $dData   = Departemen::find(1)->dokumen()->wherePivot('role','>',0)->where('id',Auth::user()->departemen_id)->where('dokumen.hapus',1)->get();
-            $data  = $dData->merge(User::find(1)->dokumen()->wherePivot('role','>',0)->where('id',Auth::user()->id)->where('dokumen.hapus',1)->get());
-            
+//            $dData  = Departemen::find(1)->dokumen()->wherePivot('role','>',0)->where('id',Auth::user()->departemen_id)->where('dokumen.hapus',1)->get();
+//            
+//            if(!$dData->isEmpty())
+//                $data   = $dData->merge(User::find(1)->dokumen()->wherePivot('role','>',0)->where('id',Auth::user()->id)->where('dokumen.hapus',1)->get());
+//            else
+//                $data = User::find(1)->dokumen()->wherePivot('role','>',0)->where('id',Auth::user()->id)->where('dokumen.hapus',1)->get();
+//            print_r($data);
         }
         else
         {
-            $data   = Departemen::find(1)->dokumen()->wherePivot('role','>',0)->where('id',Auth::user()->departemen_id);
+            $data   = Dokumen::where('hapus',1);
         }
         
         return  Datatables::of($data)
@@ -171,17 +256,17 @@ class DokumenController extends Controller
                 ->make(true);
     }
     
-    public function selectdua(Request $request, Dokumen $dokumen)
+    public function selectdua(Request $request)
     {
         $ret    = array();
         $datas  = array();
         if($request->input('id'))
         {
-            $datas = $dokumen->where('id',$request->input('id'));
+            $datas = Dokumen::where('id',$request->input('id'));
         }
         else
         {
-            $datas = $dokumen->where(function($query) use ($request)
+            $datas = Dokumen::where(function($query) use ($request)
                                {
                                     $query->where('name','like','%'.$request->input('q').'%');
                                });

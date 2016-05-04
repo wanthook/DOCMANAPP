@@ -24,7 +24,9 @@ class CreateDokumenRequest extends Request
     public function rules()
     {
         return [
-            'departemen_nama' => 'required|unique:departemen,departemen_kode,null,id,hapus,1'
+            'dokumen_file'      => 'required',
+            'dokumen_deskripsi' => 'required',
+            'dokumen_author' => 'required'
         ];
     }
     
@@ -36,8 +38,9 @@ class CreateDokumenRequest extends Request
    public function messages()
    {
        return [
-           'departemen_nama.required' => 'Kode departemen harus diisi.',
-           'departemen_nama.unique' => 'Kode departemen Sudah ada di database.'
+           'dokumen_file.required'      => 'File harus diisi.',
+           'dokumen_deskripsi.required' => 'Deskripsi harus diisi.',
+           'dokumen_author.required'    => 'Author harus diisi.'
        ];
    }
 }

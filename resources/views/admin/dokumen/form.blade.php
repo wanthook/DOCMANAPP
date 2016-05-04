@@ -26,13 +26,14 @@
         {!! $errors->first('dokumen_komentar','<span class="help-inline warning">:message</span>') !!}
     </div>                
 </div>
-<div class="par control-group">
+<p>
     <label class="control-label">Izin Departemen</label>
-    <div class="field">
-        <table class="table table-bordered responsive">
+    <div class="formwrapper" style="height:250px;overflow-y: auto;">
+        <table class="table table-bordered">
             <thead>
                 <tr>
                     <th>Departemen</th>
+                    <th>Tanpa Akses</th>
                     <th>View</th>
                     <th>Download</th>
                     <th>Edit</th>
@@ -40,23 +41,49 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>Departemen1</td>
-                    <td>x</td>
-                    <td>x</td>
-                    <td>x</td>
-                    <td>x</td>
-                </tr>
+                @foreach($departemenlist as $dep)
+                    <tr>
+                        <td>{{ $dep['departemen_nama'] }}</td>
+                        <td>{!! Form::radio('dep['.$dep['id'].']','0') !!}</td>
+                        <td>{!! Form::radio('dep['.$dep['id'].']','1') !!}</td>
+                        <td>{!! Form::radio('dep['.$dep['id'].']','2') !!}</td>
+                        <td>{!! Form::radio('dep['.$dep['id'].']','3') !!}</td>
+                        <td>{!! Form::radio('dep['.$dep['id'].']','4') !!}</td>
+                    </tr>
+                @endforeach
             </tbody>
         </table>
     </div>                
-</div>
-<div class="par control-group">
+</p>
+<p>
     <label class="control-label">Izin User</label>
-    <div class="field">
-        
+    <div class="formwrapper" style="height:250px;overflow-y: auto;">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Tanpa Akses</th>
+                    <th>View</th>
+                    <th>Download</th>
+                    <th>Edit</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($userlist as $usr)
+                    <tr>
+                        <td>{{ $usr['name'].', '.$usr['type'] }}</td>
+                        <td>{!! Form::radio('usr['.$usr['id'].']','0') !!}</td>
+                        <td>{!! Form::radio('usr['.$usr['id'].']','1') !!}</td>
+                        <td>{!! Form::radio('usr['.$usr['id'].']','2') !!}</td>
+                        <td>{!! Form::radio('usr['.$usr['id'].']','3') !!}</td>
+                        <td>{!! Form::radio('usr['.$usr['id'].']','4') !!}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
     </div>                
-</div>
+</p>
 <p class="stdformbutton">
     <button class="btn btn-primary">Simpan</button>
     <button type="reset" class="btn">Reset</button>

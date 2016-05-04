@@ -80,7 +80,7 @@
                         dataType: 'json',
                         type: 'post',
                         data: {id: id}
-                    }).done(function(data){ callback(data); console.log(data);});
+                    }).done(function(data){ callback(data[0]); });
                 }
             }
         });

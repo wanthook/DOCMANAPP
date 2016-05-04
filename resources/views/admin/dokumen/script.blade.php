@@ -46,40 +46,7 @@
                         dataType: 'json',
                         type: 'post',
                         data: {id: id}
-                    }).done(function(data){ callback(data); console.log(data);});
-                }
-            }
-        });
-        
-        jQuery('#departemen_id').select2({
-            minimumInputLength: 0,
-            ajax: 
-            {
-                url: "{{ route('departemen.selectdua') }}",
-                dataType: 'json', 
-                type: 'post',                
-                data: function (term, page) 
-                {                
-                    return { q : term  }
-                },
-                results: function(data, page ) 
-                {
-                    return { results: data }
-                }
-            },
-            initSelection: function(element, callback) 
-            {
-                var id = jQuery(element).val();
-
-                if(id!="")
-                {
-                    jQuery.ajax( 
-                    {                    
-                        url: "{{ route('departemen.selectdua') }}",
-                        dataType: 'json',
-                        type: 'post',
-                        data: {id: id}
-                    }).done(function(data){ callback(data); console.log(data);});
+                    }).done(function(data){ callback(data[0]);});
                 }
             }
         });

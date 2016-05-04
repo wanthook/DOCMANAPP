@@ -26,7 +26,7 @@
 <div class="widgetbox box-inverse">
     <h4 class="widgettitle">Form Edit Dokumen</h4>
     <div class="widgetcontent">
-        {!! Form::model($dokumen,['method' => 'PATCH', 'route' => ['dokumen.ubah',$dokumen->id],'class' => 'stdform']) !!}
+        {!! Form::model($dokumen,['method' => 'PATCH', 'route' => ['dokumen.ubah',$dokumen->id],'class' => 'stdform','files'=> true]) !!}
         @include ('admin.dokumen.form')
         {!! Form::close() !!}
     </div><!--widgetcontent-->
