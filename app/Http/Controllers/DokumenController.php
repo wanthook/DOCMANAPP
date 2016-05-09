@@ -202,15 +202,42 @@ class DokumenController extends Controller
     public function dataTables(Request $request)
     {
         $data   =    null;
+        
         if(Auth::user()->id>1)
         {
-//            $dData  = Departemen::find(1)->dokumen()->wherePivot('role','>',0)->where('id',Auth::user()->departemen_id)->where('dokumen.hapus',1)->get();
-//            
-//            if(!$dData->isEmpty())
-//                $data   = $dData->merge(User::find(1)->dokumen()->wherePivot('role','>',0)->where('id',Auth::user()->id)->where('dokumen.hapus',1)->get());
+//            if(Auth::user()->type == "ADMIN")
+//            {
+//                
+//            }
 //            else
-//                $data = User::find(1)->dokumen()->wherePivot('role','>',0)->where('id',Auth::user()->id)->where('dokumen.hapus',1)->get();
-//            print_r($data);
+//            {
+                $data  = Departemen::find(Auth::user()->departemen_id)->dokumen()
+                            ->wherePivot('role','>',0)
+                            ->where('dokumen.hapus',1)
+                            ->where('dokumen.dokumen_publish','>',0)
+                            ->orderBy
+                            ->get();
+            
+                if(!$data->isEmpty())
+                {
+                    $data = $data->merge(
+                                User::find(Auth::user()->id)->dokumen()
+                                    ->wherePivot('role','>',0)
+                                    ->where('dokumen.hapus',1)
+                                    ->where('dokumen.dokumen_publish','>',0)
+                                    ->get()
+                            );
+                }
+                else
+                {
+                    $data  = User::find(Auth::user()->id)->dokumen()
+                                    ->wherePivot('role','>',0)
+                                    ->where('dokumen.hapus',1)
+                                    ->where('dokumen.dokumen_publish','>',0)
+                                    ->get();
+
+                }
+//            }
         }
         else
         {
